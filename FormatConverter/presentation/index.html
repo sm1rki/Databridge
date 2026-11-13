@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Презентация DataBridge — Конвертер и валидатор данных</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #0ea5e9;
+            --accent: #8b5cf6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --bg-slide: #ffffff;
+            --bg-app: #0f172a;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --card-border: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-app);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .deck-container {
+            width: 92vw;
+            max-width: 1200px;
+            height: 82vh;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-slide);
+            border-radius: 20px;
+            padding: 48px 64px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .slide.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 16px;
+        }
+        .slide-badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .slide-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .slide-body {
+            flex: 1;
+            margin-top: 24px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        .card {
+            background: #f8fafc;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary-dark);
+        }
+        .card p { font-size: 15px; color: var(--text-muted); }
+        .card ul { margin-left: 20px; font-size: 15px; margin-top: 8px; }
+        .card li { margin-bottom: 6px; }
+
+        .stat-highlight {
+            font-size: 40px;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #f1f5f9;
+            padding-top: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .btn {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid #334155;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: var(--primary); border-color: var(--primary); }
+        .slide-counter { color: #94a3b8; font-size: 14px; font-weight: 600; }
+
+        .code-block {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        /* Title Slide */
+        .title-slide {
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+        }
+        .title-slide h1 {
+            font-size: 56px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .title-slide h2 {
+            font-size: 24px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 32px;
+        }
+        .team-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            display: inline-block;
+            text-align: left;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="deck-container">
+    <!-- Слайд 1: Титульный -->
+    <div class="slide active title-slide">
+        <span class="slide-badge">Групповой проект</span>
+        <h1>DataBridge</h1>
+        <h2>Универсальный конвертер и валидатор данных</h2>
+        <div class="team-box">
+            <strong>Состав команды:</strong>
+            <ul style="margin-top: 8px; margin-left: 20px;">
+                <li>Александр Смирнов — Team Lead / Архитектор</li>
+                <li>Михаил Васильев — Разработчик чтения/записи (I/O)</li>
+                <li>Екатерина Морозова — Разработчик валидации и трансформаций</li>
+                <li>Дмитрий Кузнецов — Разработчик отчётности и QA</li>
+            </ul>
+        </div>
+        <div style="margin-top: 24px; color: #64748b; font-size: 14px;">Ноябрь 2026</div>
+    </div>
+
+    <!-- Слайд 2: Проблема и актуальность -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Проблема</span>
+            <div class="slide-title">Проблема обработки разнородных данных</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-3">
+                <div class="card">
+                    <h3>"Зоопарк" форматов</h3>
+                    <p>Данные поступают в несвязанных видах: CSV от операторов, JSON с веб-форм, XML из госсистем и Excel (.xlsx) от пользователей.</p>
+                </div>
+                <div class="card">
+                    <h3>Ошибки в данных</h3>
+                    <p>Человеческий фактор: невалидные e-mail, пропуски обязательных полей, дубликаты ID, неверные форматы дат, выход чисел за границы.</p>
+                </div>
+                <div class="card">
+                    <h3>Сложности импорта</h3>
+                    <p>Падение систем импорта из-за несоответствия типов, необходимость чистить файлы вручную часами.</p>
+                </div>
+            </div>
+            <div style="margin-top: 24px; padding: 16px 20px; background: #f0fdf4; border-left: 4px solid var(--success); border-radius: 8px;">
+                <strong>Решение DataBridge:</strong> Консольный инструмент (CLI) без базы данных, автоматизирующий полный цикл: <em>Чтение &rarr; Валидация &rarr; Фильтрация &rarr; Трансформация &rarr; Конвертация &rarr; Отчёт</em>.
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 2 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 3: Цель и ключевые возможности -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Функционал</span>
+            <div class="slide-title">Ключевые возможности системы (MVP)</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Чтение и запись (4 формата)</h3>
+                    <ul>
+                        <li><strong>CSV:</strong> автоопределение разделителей, поддержка файлов без заголовков, кодировки CP1251/UTF-8.</li>
+                        <li><strong>JSON:</strong> массивы объектов и корневые обёртки.</li>
+                        <li><strong>XML:</strong> плоские деревья списков записей.</li>
+                        <li><strong>Excel (.xlsx):</strong> чтение и стилизованная запись.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Валидация и трансформация</h3>
+                    <ul>
+                        <li>Декларативные схемы правил (YAML / JSON).</li>
+                        <li>Проверка обязательности, типов, диапазонов, RegEx, уникальности, длины строки.</li>
+                        <li>Маппинг (переименование) полей.</li>
+                        <li>7 типов трансформаций (регистр, trim, словарь, даты).</li>
+                        <li>Изоляция ошибок в <code>errors.csv</code> и наглядный HTML-отчёт.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 3 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 4: Архитектура системы -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Архитектура</span>
+            <div class="slide-title">Модульная архитектура (Pipeline Pattern)</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-4" style="margin-bottom: 20px;">
+                <div class="card">
+                    <h3>1. Readers</h3>
+                    <p>BaseReader, CSVReader, JSONReader, XMLReader, ExcelReader, Factory.</p>
+                </div>
+                <div class="card">
+                    <h3>2. Validators</h3>
+                    <p>ValidationEngine, типизированные правила (rules.py), модели (models.py).</p>
+                </div>
+                <div class="card">
+                    <h3>3. Converters</h3>
+                    <p>ConversionPipeline, FieldMapper, библиотека функций transformers.py.</p>
+                </div>
+                <div class="card">
+                    <h3>4. Reporters</h3>
+                    <p>ConsoleReporter, автономный HTMLReporter, StatsReporter.</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Архитектурные принципы</h3>
+                <p>Слабая связанность модулей (Low Coupling), принцип открытости/закрытости (Open/Closed SOLID) — добавление нового формата не требует модификации ядра валидации и трансформаций.</p>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 4 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 5: Подсистема ввода/вывода (I/O) -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Модули I/O</span>
+            <div class="slide-title">Подсистема чтения и записи данных</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Особенности подсистемы Readers</h3>
+                    <ul>
+                        <li>Единый контракт: <code>read(path) -> List[Dict]</code>.</li>
+                        <li>Каждая запись обогащается исходным номером строки <code>_row_number</code> для точной локализации ошибок.</li>
+                        <li>Автоопределение разделителей CSV (запятая, точка с запятой, табуляция).</li>
+                        <li>Безопасная обработка кодировок: перебор UTF-8, UTF-8-sig, CP1251.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Особенности подсистемы Writers</h3>
+                    <ul>
+                        <li>Единый контракт: <code>write(records, path)</code>.</li>
+                        <li>Метод <code>clean_records()</code> удаляет внутренние метаполя (<code>_row_number</code>, <code>_errors</code>).</li>
+                        <li>В Excel-файлах создаётся форматированная «шапка» с автоподбором ширины колонок.</li>
+                        <li>В JSON применяется кастомный сериализатор дат (ISO 8601).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 5 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 6: Движок валидации -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Валидация</span>
+            <div class="slide-title">Декларативный движок валидации</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="code-block">
+# schema.yaml
+fields:
+  - name: id
+    type: integer
+    required: true
+    unique: true
+  - name: email
+    type: string
+    required: true
+    pattern: "^[^@]+@[^@]+\\.[^@]+$"
+  - name: age
+    type: integer
+    min: 16
+    max: 100
+  - name: birth_date
+    type: date
+    format: "YYYY-MM-DD"
+                </div>
+                <div class="card">
+                    <h3>Поддерживаемые проверки:</h3>
+                    <ul>
+                        <li><code>required: true</code> — не пустое и не пробельное.</li>
+                        <li><code>type</code> — integer, float, string, date, boolean.</li>
+                        <li><code>min / max</code> — числовые и календарные диапазоны.</li>
+                        <li><code>pattern</code> — регулярные выражения (RegEx).</li>
+                        <li><code>unique: true</code> — уникальность в пакете (O(1) по хеш-таблице).</li>
+                        <li><code>min_length / max_length</code> — длина строк.</li>
+                        <li><code>allowed_values</code> — допустимый список значений.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 6 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 7: Трансформации и изоляция ошибок -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Трансформации</span>
+            <div class="slide-title">Трансформации данных и изоляция дефектов</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>7 встроенных трансформаций</h3>
+                    <ul>
+                        <li><code>upper</code> / <code>lower</code> — регистр символов.</li>
+                        <li><code>strip</code> / <code>trim</code> — очистка от пробелов.</li>
+                        <li><code>capitalize</code> — капитализация первой буквы.</li>
+                        <li><code>replace_map</code> — словарь подстановок значений.</li>
+                        <li><code>timestamp_to_date</code> — Unix timestamp в дату.</li>
+                        <li><code>format_date</code> — конвертация формата дат.</li>
+                        <li><code>default</code> — значение по умолчанию при пустом поле.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Стратегия карантина (errors.csv)</h3>
+                    <p>Невалидные записи не блокируют весь процесс обработки:</p>
+                    <ul style="margin-top: 10px;">
+                        <li>Валидные данные конвертируются в целевой файл.</li>
+                        <li>Ошибочные строки изолируются в <code>errors.csv</code> с сохранением всех полей, номера строки и описания ошибки.</li>
+                        <li>Оператор может быстро исправить только ошибочные строки.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 7 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 8: Отчетность и CLI -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Интерфейс</span>
+            <div class="slide-title">Отчётность и CLI интерфейс</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>CLI команды утилиты</h3>
+                    <div class="code-block" style="font-size: 13px;">
+# Конвертация с валидацией и отчётом
+databridge convert input.csv --to json \
+  --config schema.yaml --output out.json \
+  --report report.html
+
+# Валидация файла без конвертации
+databridge validate input.json \
+  --config schema.yaml
+
+# Экспресс-анализ датасета
+databridge stats input.csv
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Автономный HTML-отчёт</h3>
+                    <ul>
+                        <li>Метрические плашки: Всего / Успешно / Ошибок / % Качества данных.</li>
+                        <li>Распределение ошибок по полям и правилам.</li>
+                        <li>Интерактивный журнал строк с подробным описанием.</li>
+                        <li>Автономность: чистый CSS без внешних CDN.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 8 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 9: Тестирование -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Качество</span>
+            <div class="slide-title">Тестирование и обеспечение качества</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-3" style="margin-bottom: 24px;">
+                <div class="card" style="text-align: center;">
+                    <div class="stat-highlight">36</div>
+                    <p>Unit & Integration тестов</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div class="stat-highlight" style="color: var(--success);">100%</div>
+                    <p>Успешное прохождение</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div class="stat-highlight" style="color: var(--accent);">25+</div>
+                    <p>Сценариев в Test Plan</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Проверенные граничные случаи:</h3>
+                <p>Пустые файлы; файлы только с заголовками; строки с одними пробелами; даты 31 февраля и несуществующие дни; русские кодировки (CP1251); кавычки и запятые внутри текста ячеек; переполнение диапазонов min/max.</p>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 9 из 10</span>
+        </div>
+    </div>
+
+    <!-- Слайд 10: Итоги и защита -->
+    <div class="slide">
+        <div class="slide-header">
+            <span class="slide-badge">Заключение</span>
+            <div class="slide-title">Итоги проекта и готовность к защите</div>
+        </div>
+        <div class="slide-body">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Комплект поставки к защите:</h3>
+                    <ul>
+                        <li>Исходный код (модули readers, validators, converters, reporters, cli).</li>
+                        <li>Полный пакет документации в папке <code>DOCS/</code>.</li>
+                        <li>Наборы тестовых данных <code>samples/</code>.</li>
+                        <li>Ответы на 10 контрольных вопросов (<code>DEFENSE_QA.md</code>).</li>
+                        <li>Интерактивная презентация.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Планы развития DataBridge 2.0:</h3>
+                    <ul>
+                        <li>Потоковая обработка (Streaming) для файлов в 1 млн+ строк.</li>
+                        <li>Автогенерация схемы <code>infer-schema</code> по файлу.</li>
+                        <li>Кросс-полевая условная валидация.</li>
+                        <li>Поддержка форматов Big Data (Apache Parquet).</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 24px; text-align: center; font-size: 22px; font-weight: 700; color: var(--primary);">
+                Спасибо за внимание! Готовы ответить на ваши вопросы.
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>DataBridge 1.0.0</span>
+            <span>Слайд 10 из 10</span>
+        </div>
+    </div>
+</div>
+
+<div class="controls">
+    <button class="btn" id="prevBtn" onclick="changeSlide(-1)">&larr; Предыдущий</button>
+    <span class="slide-counter" id="counter">1 / 10</span>
+    <button class="btn" id="nextBtn" onclick="changeSlide(1)">Следующий &rarr;</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('counter');
+
+    function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= slides.length) index = slides.length - 1;
+        currentSlide = index;
+
+        slides.forEach((s, idx) => {
+            s.classList.toggle('active', idx === currentSlide);
+        });
+
+        counter.textContent = `${currentSlide + 1} / ${slides.length}`;
+    }
+
+    function changeSlide(direction) {
+        showSlide(currentSlide + direction);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            changeSlide(-1);
+        }
+    });
+</script>
+
+</body>
+</html>

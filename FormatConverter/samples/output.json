@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "Иван",
+    "contact_email": "ivan@mail.ru",
+    "age": 25,
+    "birthday": "1999-01-15"
+  }
+]

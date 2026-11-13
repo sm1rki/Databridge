@@ -1,0 +1,30 @@
+[
+  {
+    "id": 101,
+    "name": "Алексей Смирнов",
+    "email": "alex.smirnov@company.ru",
+    "age": 28,
+    "birth_date": "1996-04-12"
+  },
+  {
+    "id": 102,
+    "name": "Екатерина Кузнецова",
+    "email": "ekaterina@domain.com",
+    "age": 34,
+    "birth_date": "1990-11-25"
+  },
+  {
+    "id": 103,
+    "name": "Максим Попов",
+    "email": "maxim.wrong-email",
+    "age": 150,
+    "birth_date": "1974-02-18"
+  },
+  {
+    "id": 104,
+    "name": "Ольга Васильева",
+    "email": "olga.v@corp.org",
+    "age": 22,
+    "birth_date": "2002-09-01"
+  }
+]

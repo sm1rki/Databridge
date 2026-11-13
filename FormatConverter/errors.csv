@@ -1,0 +1,2 @@
+row_number,error_reason,id,name,email,age,birth_date
+3,не соответствует формату; вне диапазона (200 > max 100),2,Мария,maria.mail.ru,200,1994-05-20

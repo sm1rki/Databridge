@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<records>
+  <record>
+    <id>201</id>
+    <name>Дмитрий Ковалев</name>
+    <email>dmitry.k@corp.com</email>
+    <age>31</age>
+    <birth_date>1993-07-14</birth_date>
+  </record>
+  <record>
+    <id>202</id>
+    <name>София Морозова</name>
+    <email>sofia@agency.ru</email>
+    <age>24</age>
+    <birth_date>2000-01-20</birth_date>
+  </record>
+  <record>
+    <id>203</id>
+    <name>Артем Новиков</name>
+    <email>artem@provider.net</email>
+    <age>40</age>
+    <birth_date>1984-12-03</birth_date>
+  </record>
+</records>
