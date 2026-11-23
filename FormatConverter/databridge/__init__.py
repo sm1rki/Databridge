@@ -4,4 +4,4 @@ A modular tool to read, validate, transform, and convert data across CSV, JSON, 
 """
 
 __version__ = "1.0.0"
-__author__ = "DataBridge Group Team"
+__author__ = "By Doooouni"
